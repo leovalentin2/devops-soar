@@ -12,11 +12,10 @@ def triage_ip():
     ip_address = data['ip']
 
     # --- EASTER EGG ---
-    # If the user tries to check localhost, return a fun message.
     if ip_address == "127.0.0.1":
         return jsonify({
             "message": "Playbook successfully executed for IP: 127.0.0.1",
-            "report": "There's no place like 127.0.0.1. It's safe here. 🏠"
+            "report": "There's no place like home. It's safe here."
         })
 
     command = [
