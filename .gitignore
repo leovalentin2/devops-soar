@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# API keys
+secrets.yml
+
 # C extensions
 *.so
 

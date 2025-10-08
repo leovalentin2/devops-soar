@@ -1,0 +1,63 @@
+---
+- name: Setup Nginx Environment
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Build the Nginx docker image
+      community.docker.docker_image:
+        name: soar-nginx:latest
+        build:
+          path: ../nginx
+        source: build
+
+    - name: Ensure the Nginx container is running
+      community.docker.docker_container:
+        name: soar-nginx-container
+        image: soar-nginx:latest
+        state: started
+        ports:
+          - "8080:80"
+        volumes:
+          - "{{ playbook_dir }}/../nginx/blocklist.conf:/etc/nginx/blocklist.conf"
+
+- name: Threat Intelligence Gathering and Response Playbook
+  hosts: localhost
+  connection: local
+  vars:
+    ip_to_check: "8.8.8.8"
+
+  tasks:
+    - name: Run AbuseIPDB enrichment script
+      command: "python3 ../app/scripts/check_abuseipdb.py {{ ip_to_check }}"
+      register: abuse_raw_result
+      changed_when: false
+
+    - name: Parse AbuseIPDB JSON output
+      set_fact:
+        abuse_result: "{{ abuse_raw_result.stdout | from_json }}"
+
+    - name: Run VirusTotal enrichment script
+      command: "python3 ../app/scripts/check_virustotal.py {{ ip_to_check }}"
+      register: vt_raw_result
+      changed_when: false
+
+    - name: Parse VirusTotal JSON output
+      set_fact:
+        vt_result: "{{ vt_raw_result.stdout | from_json }}"
+
+    - name: Generate Markdown report from template
+      template:
+        src: ./templates/report.md.j2
+        dest: "../report.md"
+
+    # --- RESPONSE TASKS ---
+
+    - name: Block malicious IP if abuse score is high
+      ansible.builtin.lineinfile:
+        path: ../nginx/blocklist.conf
+        line: "deny {{ ip_to_check }};"
+      when: abuse_result.abuseConfidenceScore | int > 90
+
+    - name: Reload Nginx to apply blocklist
+      command: docker exec soar-nginx-container nginx -s reload
+      when: abuse_result.abuseConfidenceScore | int > 90
