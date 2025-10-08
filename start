@@ -2,27 +2,19 @@
 
 echo "--- Starting Services for SOAR Tutorial ---"
 
-# 1. Start the Docker service, which is required by our playbook.
+# 1. Start the Docker service. This needs to be running in the background.
 echo "Starting Docker daemon..."
 sudo service docker start
-sleep 12 # Give the daemon a moment to initialize properly.
+sleep 5 # Give the daemon a moment to initialize.
 
-# 2. Run the Ansible playbook to ensure the Nginx container is built and running.
-# This makes our setup idempotent - it will always result in a correct state.
-echo "Ensuring Nginx container is built and running via Ansible..."
-ansible-playbook ansible/playbook.yml
-
-# 3. Start the Flask web application in the background.
-# The '>' redirects its output to a log file, and the '&' makes it run in the background.
-echo "Starting Flask API server in the background (logs will be in flask.log)..."
+# 2. Start the Flask web application in the background.
+echo "Starting Flask API server in the background (see flask.log)..."
 python3 app/app.py > flask.log 2>&1 &
-sleep 5 # Give the Flask server a moment to start up.
+sleep 2 # Give the Flask server a moment to start up.
 
 echo ""
 echo "Environment is ready!"
-echo "You can now follow the instructions in the README to run the curl commands for the tutorial."
 echo ""
 
-# 4. Hand over control to the user in an interactive bash shell.
-# The 'exec' command replaces the current script process with a bash shell.
+# 3. Hand over control to the user in an interactive bash shell.
 exec /bin/bash
