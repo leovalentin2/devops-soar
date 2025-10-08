@@ -54,7 +54,7 @@ This project requires API keys to function. These keys should be kept secret and
 #### **Step 1: Launch the Environment**
 Click the "launch binder" badge below. This will take a few minutes as it builds the complete, pre-configured environment. The `start` script will automatically run, preparing all the necessary services in the background.
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leovalentin2/devops-soar/tree/main/main)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leovalentin2/devops-soar/main)
 
 #### **Step 2: Take a Look Around**
 When the environment loads, you will be in a ready-to-use terminal. Let's verify the tools we have at our disposal. Run the following commands:
