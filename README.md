@@ -1,12 +1,6 @@
 # Building a Mini-SOAR with Ansible, Docker, and Flask to triage suspicious IP addresses
 
-- **Names and KTH ID:** Leo Hansson Åkerberg (leo3@kTH.se)
-- **Deadline:** Task 3
-- **Category:** Executable tutorial
-
----
-
-Welcome to this hands-on tutorial where you will build a miniature, event-driven SOAR (Security Orchestration, Automation, and Response) pipeline. You'll learn how to automate security workflows by integrating common DevOps tools like Ansible, Docker, and Flask to triage and respond to threats in real time.
+Welcome to this hands-on tutorial where you will build and interact with a miniature, event-driven SOAR (Security Orchestration, Automation, and Response) pipeline. You'll learn how to automate security workflows by integrating common DevOps tools like Ansible, Docker, and Flask to triage and respond to threats in real time.
 
 ### Learning Outcomes
 By completing this tutorial, you will:
@@ -28,41 +22,56 @@ This tutorial implements a complete, event-driven SOAR workflow. The process is 
 
 ![SOAR Workflow](soar_workflow.png)
 
-### Learning Environment
-You will work in a pre-configured, browser-based environment on mybinder.org containing:
-- **Ansible:** The orchestration engine for our workflow.
-- **Docker:** The container platform used to run our web server (Nginx).
-- **Flask (Python):** The web framework for our API trigger.
-- **External APIs:** Free threat intelligence feeds from AbuseIPDB and VirusTotal.
-
-### Tutorial Flow
-**Phase 1: Setup (Automated)**
-- The `start` script will automatically prepare the environment, start the Docker service, and launch the Nginx and Flask servers.
-
-**Phase 2: Manual Trigger and Automated Response**
-- You will act as the "tripwire" (for example, an IDS) by manually sending an alert to the Flask API.
-- You will then observe the fully automated enrichment and response workflow execute.
-
-### Expected Duration
-- **Total Time:** 10-15 minutes
-- **Environment Build Time:** 3-5 minutes (first launch on mybinder.org)
-- **Interactive Tutorial:** 5-10 minutes
-
-### Prerequisites
-- Familiarity with the command-line interface.
-- General knowledge of web applications and security concepts
-
 ---
 
-### **Let's Begin: Executing the Tutorial**
+### **Interactive Walkthrough**
 
-**Step 1: Launch the Environment**
+#### **A Note on Secrets**
+This project requires API keys to function. These keys are kept secret and are not committed to the repository. In order to obtain the API keys, you need to decrypt `secrets.yml.gpg` by using the corresponding private GPG key. For this interactive tutorial, you will be providing your own keys in Step 2.
 
-Click the "launch binder" badge below. This will take a few minutes as it builds the complete environment.
+#### **Step 1: Launch the Environment**
+Click the "launch binder" badge below. This will take a few minutes as it builds the complete, pre-configured environment. The `start` script will automatically run, preparing all the necessary services in the background.
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main) 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leovalentin2/devops-soar/main)
 
-**Step 2: Add API Keys**
+#### **Step 2: Take a Look Around**
+When the environment loads, you will be in a ready-to-use terminal. Let's verify the tools we have at our disposal. Run the following commands:
+
+    ```bash
+        python3 --version
+        docker --version
+        ansible --version
+    ```
+
+You can see all our core technologies are installed. Our orchestrator is Ansible, a powerful tool for automation. But what is it actually doing? Let's look at how the code is written for the playbook.
+
+    ```yaml
+    - name: Threat Intelligence Gathering and Response Playbook
+    hosts: localhost
+    connection: local
+    # ...
+    tasks:
+        - name: Ensure blocklist is clean before run
+        ansible.builtin.copy:
+            content: ""
+            dest: ../nginx/blocklist.conf
+
+        - name: Run AbuseIPDB enrichment script
+        command: "python3 ../app/scripts/check_abuseipdb.py {{ ip_to_check }}"
+        register: abuse_raw_result
+
+        - name: Parse AbuseIPDB JSON output
+        set_fact:
+            abuse_result: "{{ abuse_raw_result.stdout | from_json }}"
+        
+        # ... (VirusTotal tasks are very similar) ...
+
+        - name: Block malicious IP if abuse score is high
+        ansible.builtin.lineinfile:
+            path: ../nginx/blocklist.conf
+            line: "deny {{ ip_to_check }};"
+        when: abuse_result.abuseConfidenceScore | int > 90 # We can change this score depending on our risk tolerance
+    ```
 
 To satisfy the `no-account` requirement, this tutorial requires you to use your own free API keys.
 
@@ -98,6 +107,7 @@ The `start` script has already launched all necessary services. You can now inte
 
 ### Easter Egg
 
-There's no place like home. Try triaging the localhost IP address to see a special message.
+There's no place like home! Try triaging the localhost IP address to see a special message.
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '{"ip": "127.0.0.1"}' [http://127.0.0.1:5000/triage](http://127.0.0.1:5000/triage)
+```
