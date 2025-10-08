@@ -29,7 +29,7 @@ Upon completing this tutorial, you will be able to:
 
 The tutorial implements the following automated workflow:
 
-![SOAR Workflow](flowchart.png)
+![SOAR Workflow](soar_workflow.png)
 
 ## How to Run This Tutorial (Executable & Pedagogical)
 
