@@ -1,44 +1,7 @@
-- name: Setup and Configure Nginx Service
+---
+- name: Threat Intelligence Gathering and Response Playbook
   hosts: localhost
   connection: local
-  become: yes # Use 'sudo' for file operations in /etc
-
-  tasks:
-    - name: Ensure Nginx service is started and enabled
-      ansible.builtin.service:
-        name: nginx
-        state: started
-        enabled: yes
-
-    - name: Copy our custom Nginx site configuration
-      ansible.builtin.copy:
-        src: ../nginx/default.conf
-        dest: /etc/nginx/sites-available/soar-tutorial
-        mode: '0644'
-
-    - name: Disable the default Nginx site
-      ansible.builtin.file:
-        path: /etc/nginx/sites-enabled/default
-        state: absent
-      notify: Reload Nginx
-
-    - name: Enable our custom Nginx site
-      ansible.builtin.file:
-        src: /etc/nginx/sites-available/soar-tutorial
-        dest: /etc/nginx/sites-enabled/soar-tutorial
-        state: link
-      notify: Reload Nginx
-
-  handlers:
-    - name: Reload Nginx
-      ansible.builtin.service:
-        name: nginx
-        state: reloaded
-
-- name: Threat Intelligence Gathering and Response
-  hosts: localhost
-  connection: local
-  become: yes # Use 'sudo' for file operations in /etc
   vars:
     ip_to_check: "8.8.8.8"
 
@@ -46,14 +9,12 @@
     - name: Ensure blocklist is clean before run
       ansible.builtin.copy:
         content: ""
-        dest: /etc/nginx/blocklist.conf
-        mode: '0644'
+        dest: ../blocklist.txt
 
     - name: Run AbuseIPDB enrichment script
       command: "python3 ../app/scripts/check_abuseipdb.py {{ ip_to_check }}"
       register: abuse_raw_result
       changed_when: false
-      become: no # Run python scripts as the regular user
 
     - name: Parse AbuseIPDB JSON output
       set_fact:
@@ -63,21 +24,13 @@
       command: "python3 ../app/scripts/check_virustotal.py {{ ip_to_check }}"
       register: vt_raw_result
       changed_when: false
-      become: no # Run python scripts as the regular user
 
     - name: Parse VirusTotal JSON output
       set_fact:
         vt_result: "{{ vt_raw_result.stdout | from_json }}"
 
-    - name: Block malicious IP if abuse score is high
+    - name: Add malicious IP to blocklist if abuse score is high
       ansible.builtin.lineinfile:
-        path: /etc/nginx/blocklist.conf
-        line: "deny {{ ip_to_check }};"
+        path: ../blocklist.txt
+        line: "{{ ip_to_check }}"
       when: abuse_result.abuseConfidenceScore | int > 90
-      notify: Reload Nginx
-
-  handlers:
-    - name: Reload Nginx
-      ansible.builtin.service:
-        name: nginx
-        state: reloaded
