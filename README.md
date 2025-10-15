@@ -65,9 +65,9 @@ When the environment loads, you will see the JupyterLab interface shown below. I
 This tutorial requires a flask endpoint to be running in the background: this is how we simulate alarms in this tutorial. In a real-world setting, the alarm would probably originate from an IDS or SIEM-tool.
 
 **Starting the Flask API Server:** Start our Flask application in the background. This will listen for our `curl` commands.
-  ```python
-    python3 app/app.py > flask.log 2>&1 &
-  ```
+```python
+python3 app/app.py > flask.log 2>&1 &
+```
 
 After running these commands, please wait a few seconds for the service to initialize properly before proceeding to the next step.
 
@@ -78,18 +78,18 @@ Now the background services are running, but they need API keys to function. We 
 2.  An untitled file will be created. Rename it to exactly `secrets.yml` and press `Enter`.
 3.  Double-click your new `secrets.yml` file. It will open in the editor pane.
 4.  Paste the following content into the file, replacing the placeholders with your actual keys obtained from the encrypted `secrets.yml.gpg`.
-  ```yaml
-    abuseipdb_key: YOUR_ABUSEIPDB_KEY_HERE
-    virustotal_key: YOUR_VIRUSTOTAL_KEY_HERE
-  ```
+```yaml
+abuseipdb_key: YOUR_ABUSEIPDB_KEY_HERE
+virustotal_key: YOUR_VIRUSTOTAL_KEY_HERE
+```
 5.  Save the file by pressing `Ctrl+S`.
 
 #### **Step 5: Take a Look Around**
 Since your environment is now fully set up and ready, let's verify the tools we have at our disposal. Run the following commands:
 
 ```bash
-  ython3 --version
-  ansible --version
+python3 --version
+ansible --version
 ```
 
 You can see all our core technologies are installed. Our orchestrator is **Ansible**, but what is it actually doing? Let us dive a bit deeper into the playbook.
@@ -137,7 +137,7 @@ Here, we can see how Ansible runs our Python script through the `command` module
 Now, let's trigger the workflow. We will act as an IDS and send an alert about a known malicious IP to our Flask API.
 
 ```bash
-  curl -X POST -H "Content-Type: application/json" -d '{"ip": "185.191.171.12"}' http://127.0.0.1:5000/triage
+curl -X POST -H "Content-Type: application/json" -d '{"ip": "185.191.171.12"}' http://127.0.0.1:5000/triage
 ```
 
 The terminal will return a JSON object containing the threat intelligence report for this IP.
@@ -146,7 +146,7 @@ The terminal will return a JSON object containing the threat intelligence report
 So, what just happened? The playbook executed the "Response" part of our SOAR workflow. Let us verify it.
 
 ```bash
-  cat blocklist.txt
+cat blocklist.txt
 ```
 
 You will see the line `deny 185.191.171.12;`. The IP has been blocked.
@@ -163,7 +163,7 @@ You will see the line `deny 185.191.171.12;`. The IP has been blocked.
 Now, let us see how our system handles a non-threatening IP. This will test the playbook's conditional logic.
 
 ```bash
-  curl -X POST -H "Content-Type: application/json" -d '{"ip": "8.8.8.8"}' http://127.0.0.1:5000/triage
+curl -X POST -H "Content-Type: application/json" -d '{"ip": "8.8.8.8"}' http://127.0.0.1:5000/triage
 ```
 
 You will receive a clean report and the `abuseConfidenceScore` will be 0. Since 0 is not greater than 80, the `when:` condition in the playbook will evaluate to ``false``. Therefore, the update of the blocklist should be skipped.
@@ -172,7 +172,7 @@ You will receive a clean report and the `abuseConfidenceScore` will be 0. Since 
 Let us check the blocklist again.
 
 ```bash
-  cat blocklist.txt
+cat blocklist.txt
 ```
 
 As predicted, the file is now empty. The playbook ran the initial task but correctly skipped the tasks to add the IP and update the blocklist. This proves that our automation is working. Congratulations! You have now gained some practical experience related to SOAR workflows!
