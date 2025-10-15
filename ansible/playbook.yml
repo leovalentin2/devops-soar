@@ -29,8 +29,13 @@
       set_fact:
         vt_result: "{{ vt_raw_result.stdout | from_json }}"
 
+    - name: Generate Markdown report from template
+      template:
+        src: ./templates/report.md.j2
+        dest: ../report.md
+
     - name: Add malicious IP to blocklist if abuse score is high
       ansible.builtin.lineinfile:
         path: ../blocklist.txt
         line: "{{ ip_to_check }}"
-      when: abuse_result.abuseConfidenceScore | int > 90
+      when: abuse_result.abuseConfidenceScore | int > 80
