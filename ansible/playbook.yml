@@ -6,10 +6,6 @@
     ip_to_check: "8.8.8.8"
 
   tasks:
-    - name: Ensure blocklist is clean before run
-      ansible.builtin.copy:
-        content: ""
-        dest: ../blocklist.txt
 
     - name: Run AbuseIPDB enrichment script
       command: "python3 ../app/scripts/check_abuseipdb.py {{ ip_to_check }}"
@@ -34,8 +30,11 @@
         src: ./templates/report.md.j2
         dest: ../report.md
 
-    - name: Add malicious IP to blocklist if abuse score is high
+    - name: Add malicious IP to blocklist if abuse score is high and IP is not already blocked
       ansible.builtin.lineinfile:
         path: ../blocklist.txt
         line: "{{ ip_to_check }}"
-      when: abuse_result.abuseConfidenceScore | int > 80
+        create: yes
+      when:
+        - abuse_result.abuseConfidenceScore | int > 80
+        - ip_to_check not in lookup('file', '../blocklist.txt', default='')
