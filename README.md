@@ -1,9 +1,5 @@
 # Building a Mini-SOAR with Ansible, Python and Flask to triage suspicious IP addresses
 
-- **Names and KTH ID:** Leo Hansson Åkerberg (leo3@kth.se)
-- **Deadline:** Task 3
-- **Category:** Executable tutorial
-
 ---
 
 #### **A quick note on Docker and MyBinder**
