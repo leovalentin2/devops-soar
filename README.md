@@ -1,7 +1,5 @@
 # Building a Mini-SOAR with Ansible, Python and Flask to triage suspicious IP addresses
 
----
-
 #### **A quick note on Docker and MyBinder**
 
 While this tutorial originally had a Nginx web server running in a docker container, this feature had to be removed in order to be compatible as an executable tutorial on MyBinder. MyBinder does not allow docker container deployments, since it launches the repo itself inside a container. The Nginx web service was replaced with a `blocklist.txt` file that in a real setting would be a reloadable configuration file for an active Nginx web service. The author tried to deploy the project with Nginx anyways, but `sudo` commands are not allowed either, meaning there was no possibility to reload the Nginx service.
